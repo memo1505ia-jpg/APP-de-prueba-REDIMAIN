@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Symmetrical Tactical Officer Shield Backdrop -->
+    <path
+        android:fillColor="#12243F"
+        android:strokeColor="#C5A059"
+        android:strokeWidth="3.2"
+        android:pathData="M54,16 L84,26 L80,68 C80,84 54,94 54,94 C54,94 28,84 28,68 L24,26 Z" />
+
+    <!-- Anchor Shaft -->
+    <path
+        android:strokeColor="#DFBA73"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M54,34 L54,76" />
+
+    <!-- Anchor Horizontal Stock -->
+    <path
+        android:strokeColor="#DFBA73"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M43,43 L65,43" />
+
+    <!-- Top Ring of Anchor -->
+    <path
+        android:strokeColor="#DFBA73"
+        android:strokeWidth="2.5"
+        android:pathData="M54,31 C56.5,31 58.5,29 58.5,26.5 C58.5,24 56.5,22 54,22 C51.5,22 49.5,24 49.5,26.5 C49.5,29 51.5,31 54,31 Z" />
+
+    <!-- Anchor Flukes Arc -->
+    <path
+        android:strokeColor="#DFBA73"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M40,62 C40,77 68,77 68,62" />
+
+    <!-- Center Command Star symbol -->
+    <path
+        android:fillColor="#DFBA73"
+        android:pathData="M54,47 L56,51.5 L61,52 L57,55.5 L58.5,60.5 L54,58 L49.5,60.5 L51,55.5 L47,52 L52,51.5 Z" />
+
+</vector>
