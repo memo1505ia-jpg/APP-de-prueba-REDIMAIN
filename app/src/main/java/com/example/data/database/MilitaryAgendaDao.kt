@@ -121,6 +121,9 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity): Long
+
+    @Update
+    suspend fun updateUser(user: UserEntity)
 }
 
 @Dao

@@ -17,8 +17,9 @@ data class OfficerEntity(
     val hasAlarm: Boolean = false,
     val timestamp: Long = System.currentTimeMillis(),
     
-    // 2. Base de datos y categorías de Tripulación (DIRECTRICES)
-    val category: String = "OFICIALES", // Options: OFICIALES, OFICIALES TÉCNICOS, OFICIAL DE TROPA, OFICIAL ASIMILADO, TROPA PROFESIONAL, TROPA ALISTADA
+    // Categoría militar según estructura orgánica REDIMAIN
+    // Valores válidos en MilitaryCategories.ALL
+    val category: String = "OFICIAL DE COMANDO",
     
     // 3. Componente de Perfil Completo (Expediente)
     val direccionHabitacion: String = "",

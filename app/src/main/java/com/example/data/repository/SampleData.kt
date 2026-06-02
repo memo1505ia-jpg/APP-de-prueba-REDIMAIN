@@ -12,7 +12,8 @@ object SampleData {
 
     val defaultUser = UserEntity(
         email = "memo1505matuteramayo@gmail.com",
-        name = "Almirante de Guardia"
+        name = "Almirante de Guardia",
+        role = UserRole.SUPER_ADMIN.name
     )
 
     val defaultFuelLimits = listOf(

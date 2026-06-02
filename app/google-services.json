@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "946054000473",
+    "project_id": "redimain-control",
+    "storage_bucket": "redimain-control.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:946054000473:android:7695212f6f07dee5002648",
+        "android_client_info": {
+          "package_name": "com.aistudio.redimaincontrol.vznyg"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGs6MKNoqe0gw1-rI-sT1yEHrOhjvQMrw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

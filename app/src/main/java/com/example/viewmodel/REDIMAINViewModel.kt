@@ -560,6 +560,70 @@ class REDIMAINViewModel(application: Application) : AndroidViewModel(application
         _currentUser.value = null
     }
 
+    // --- RBAC: Permisos del usuario actual ---
+
+    /**
+     * Permisos efectivos del usuario en sesión.
+     * Si tiene customPermissions definidos, los usa; si no, usa los del rol.
+     */
+    val currentUserPermissions: StateFlow<com.example.data.model.UserPermissions> =
+        _currentUser.map { user ->
+            if (user == null) {
+                com.example.data.model.UserPermissions() // Sin permisos
+            } else {
+                val role = try {
+                    com.example.data.model.UserRole.valueOf(user.role)
+                } catch (e: Exception) {
+                    com.example.data.model.UserRole.VIEWER
+                }
+                com.example.data.model.UserPermissions.fromRole(role)
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), com.example.data.model.UserPermissions())
+
+    /** ¿Puede el usuario actual escribir en esta sección? */
+    fun canWrite(section: String): Boolean =
+        com.example.data.model.UserPermissionsManager.canWrite(currentUserPermissions.value, section)
+
+    /** ¿Puede el usuario actual leer esta sección? */
+    fun canRead(section: String): Boolean =
+        com.example.data.model.UserPermissionsManager.canRead(currentUserPermissions.value, section)
+
+    /** ¿Es el usuario actual Super Administrador? */
+    fun isSuperAdmin(): Boolean =
+        _currentUser.value?.role == com.example.data.model.UserRole.SUPER_ADMIN.name
+
+    /**
+     * Cambia el rol de un usuario. Solo puede ejecutarlo un SUPER_ADMIN.
+     * Actualiza tanto en Room local como en Firestore.
+     */
+    fun updateUserRole(
+        targetUser: com.example.data.model.UserEntity,
+        newRole: com.example.data.model.UserRole,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        if (!isSuperAdmin()) {
+            onFailure("Acceso denegado: solo el Super Administrador puede modificar roles.")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val updated = targetUser.copy(role = newRole.name)
+                repository.updateUser(updated)
+
+                // Sincronizar con Firestore
+                com.example.firebase.FirebaseManager.db
+                    .collection(com.example.firebase.FirebaseManager.Collections.USERS)
+                    .document(targetUser.email)
+                    .update("role", newRole.name)
+
+                onSuccess()
+            } catch (e: Exception) {
+                onFailure(e.localizedMessage ?: "Error al actualizar el rol.")
+            }
+        }
+    }
+
     // Fuel Operations
     fun addFuelTransaction(
         personName: String,

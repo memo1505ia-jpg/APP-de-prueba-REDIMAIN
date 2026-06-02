@@ -80,6 +80,7 @@ class MilitaryAgendaRepository(
 
     // User CRUD
     suspend fun insertUser(user: UserEntity): Long = userDao.insertUser(user)
+    suspend fun updateUser(user: UserEntity) = userDao.updateUser(user)
     suspend fun getUserByEmail(email: String): UserEntity? = userDao.getUserByEmail(email)
 
     // Fuel supply CRUD
