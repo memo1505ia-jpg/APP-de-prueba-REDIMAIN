@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 import com.example.data.model.OfficerEntity
 import com.example.data.model.StatusOptionEntity
 import com.example.viewmodel.REDIMAINViewModel
@@ -816,9 +817,9 @@ fun AddOrEditOfficerDialog(
     var triggerAlarm by remember { mutableStateOf(officer?.hasAlarm ?: true) }
     var photoUri by remember { mutableStateOf(officer?.photoUri ?: "") }
     
-    // Categorias standard obligatorias (DIRECTRICES)
-    val categories = listOf("OFICIALES", "OFICIALES TÉCNICOS", "OFICIAL DE TROPA", "OFICIAL ASIMILADO", "TROPA PROFESIONAL", "TROPA ALISTADA")
-    var categoryState by remember { mutableStateOf(officer?.category ?: "OFICIALES") }
+    // Categorías estándar oficiales REDIMAIN (Fase 4)
+    val categories = com.example.data.model.MilitaryCategories.ALL
+    var categoryState by remember { mutableStateOf(officer?.category?.let { com.example.data.model.MilitaryCategories.normalize(it) } ?: com.example.data.model.MilitaryCategories.DEFAULT) }
     var showCategoryDropdown by remember { mutableStateOf(false) }
 
     // Domicilio and tools
@@ -866,6 +867,32 @@ fun AddOrEditOfficerDialog(
 
     var showStatusDropdown by remember { mutableStateOf(false) }
 
+    // Cloudinary upload state
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var isUploadingPhoto by remember { mutableStateOf(false) }
+    var uploadError by remember { mutableStateOf<String?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Gallery launcher → sube a Cloudinary automáticamente
+    val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            isUploadingPhoto = true
+            uploadError = null
+            coroutineScope.launch {
+                try {
+                    val url = com.example.firebase.CloudinaryRepository.uploadOfficerPhoto(context, uri)
+                    photoUri = url
+                } catch (e: Exception) {
+                    uploadError = e.message ?: "Error al subir la foto"
+                } finally {
+                    isUploadingPhoto = false
+                }
+            }
+        }
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -903,44 +930,122 @@ fun AddOrEditOfficerDialog(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Avatar uploader & simulated photopicker
-                    Text("Fotografía Oficial (Hacer Click para cambiar sugerencias)", fontSize = 10.sp, color = Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
-                    Box(
-                        modifier = Modifier
-                            .size(74.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF1E293B), CircleShape)
-                            .border(1.5.dp, Color(0xFFF59E0B), CircleShape)
-                            .align(Alignment.CenterHorizontally)
-                            .clickable {
-                                val simulatedAvatars = listOf(
-                                    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200", // F 1
-                                    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200", // M 1
-                                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200", // F 2
-                                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200", // M 2
-                                    "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=200"  // Command portrait
-                                )
-                                photoUri = if (photoUri in simulatedAvatars) {
-                                    val currentIdx = simulatedAvatars.indexOf(photoUri)
-                                    val nextIdx = (currentIdx + 1) % (simulatedAvatars.size + 1)
-                                    if (nextIdx == simulatedAvatars.size) "" else simulatedAvatars[nextIdx]
-                                } else {
-                                    simulatedAvatars[0]
-                                }
-                            },
-                        contentAlignment = Alignment.Center
+                    // --- Fotografía Oficial con Cloudinary (Fase 3) ---
+                    Text(
+                        "Fotografía Oficial",
+                        fontSize = 10.sp,
+                        color = Color(0xFF94A3B8),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (photoUri.isNotBlank()) {
-                            AsyncImage(
-                                model = photoUri,
-                                contentDescription = "Simulación de Avatar",
-                                modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                contentScale = ContentScale.Crop // object-fit: cover
-                            )
-                        } else {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(imageVector = Icons.Default.AddAPhoto, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(22.dp))
-                                Text("SUBIR FOTO", fontSize = 8.sp, color = Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                        // Círculo de previsualización
+                        Box(
+                            modifier = Modifier
+                                .size(74.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1E293B), CircleShape)
+                                .border(
+                                    1.5.dp,
+                                    if (isUploadingPhoto) Color(0xFF3B82F6) else Color(0xFFF59E0B),
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isUploadingPhoto) {
+                                androidx.compose.material3.CircularProgressIndicator(
+                                    modifier = Modifier.size(28.dp),
+                                    color = Color(0xFF3B82F6),
+                                    strokeWidth = 3.dp
+                                )
+                            } else if (photoUri.isNotBlank()) {
+                                AsyncImage(
+                                    model = photoUri,
+                                    contentDescription = "Foto oficial",
+                                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Default.AddAPhoto,
+                                        contentDescription = null,
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Text("FOTO", fontSize = 8.sp, color = Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+
+                        // Botones de acción
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Button(
+                                onClick = { galleryLauncher.launch("image/*") },
+                                enabled = !isUploadingPhoto,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AddAPhoto,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = Color.Black
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    if (isUploadingPhoto) "Subiendo..." else "Seleccionar de Galería",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+                            if (photoUri.isNotBlank() && !isUploadingPhoto) {
+                                OutlinedButton(
+                                    onClick = { photoUri = "" },
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
+                                    border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.5f)),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                                ) {
+                                    Text("Quitar foto", fontSize = 11.sp)
+                                }
+                            }
+                        }
+                    }
+                    // Mensaje de error si Cloudinary falla
+                    uploadError?.let { err ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFEF4444).copy(alpha = 0.15f)),
+                            border = BorderStroke(1.dp, Color(0xFFEF4444)),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = Color(0xFFEF4444),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = err,
+                                    color = Color.White,
+                                    fontSize = 10.sp
+                                )
                             }
                         }
                     }
