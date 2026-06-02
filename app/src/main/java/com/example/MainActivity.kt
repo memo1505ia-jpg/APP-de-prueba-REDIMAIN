@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ui.*
 import com.example.data.model.RowEntity
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.REDIMAINViewModel
@@ -161,6 +162,14 @@ fun REDIMAINControlApp(
                             isSelected = selectedFooterTab == "Combustible",
                             onClick = { selectedFooterTab = "Combustible" }
                         )
+                        if (currentUser?.role == com.example.data.model.UserRole.SUPER_ADMIN.name) {
+                            FooterTabItem(
+                                title = "Admin",
+                                icon = Icons.Default.AdminPanelSettings,
+                                isSelected = selectedFooterTab == "Admin",
+                                onClick = { selectedFooterTab = "Admin" }
+                            )
+                        }
                     }
                 }
             }
@@ -428,6 +437,13 @@ fun REDIMAINControlApp(
                         "Combustible" -> {
                             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                                 CombustibleControlScreen(viewModel = viewModel)
+                            }
+                        }
+                        "Admin" -> {
+                            if (currentUser?.role == com.example.data.model.UserRole.SUPER_ADMIN.name) {
+                                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                                    AdminPanelScreen(viewModel = viewModel)
+                                }
                             }
                         }
                     }
